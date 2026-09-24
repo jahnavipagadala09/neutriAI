@@ -35,7 +35,7 @@ const Signup = () => {
       [name]: value,
     }));
   };
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     // Check passwords
@@ -50,24 +50,41 @@ const Signup = () => {
       return;
     }
 
-    // Create user object
-    const user = {
-      firstName: formData.firstName,
-      lastName: formData.lastName,
-      email: formData.email,
-      password: formData.password,
-    };
+    try {
+      // Send registration data to backend
+      const response = await fetch("http://localhost:5000/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: `${formData.firstName} ${formData.lastName}`,
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
 
-    // Save user in browser
-    localStorage.setItem("nutriUser", JSON.stringify(user));
+      const data = await response.json();
 
-    // Mark user as logged in
-    localStorage.setItem("isLoggedIn", "true");
+      // Backend returned an error
+      if (!response.ok) {
+        alert(data.message || "Registration failed");
+        return;
+      }
 
-    // Go to dashboard
-    navigate("/dashboard");
+      // Registration successful
+      alert("Account created successfully!");
+
+      // Store only safe user information
+      localStorage.setItem("nutriUser", JSON.stringify(data.user));
+
+      // Go to dashboard
+      navigate("/dashboard");
+    } catch (error) {
+      console.error("Registration error:", error);
+      alert("Cannot connect to the backend");
+    }
   };
-
   // Password strength
   const getPasswordStrength = () => {
     const password = formData.password;
